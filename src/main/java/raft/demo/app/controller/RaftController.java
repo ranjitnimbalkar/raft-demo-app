@@ -1,35 +1,34 @@
 package raft.demo.app.controller;
-import org.springframework.web.bind.annotation.*;
-import raft.demo.app.component.RaftNode;
-import raft.demo.app.state.LogEntry;
 
-import java.util.List;
-import java.util.Map;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import raft.demo.app.dto.*;
+import raft.demo.app.core.RaftNode;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/raft")
 public class RaftController {
+
     private final RaftNode node;
 
+    @Autowired
     public RaftController(RaftNode node) { this.node = node; }
 
-    @GetMapping("/status")
-    public Map<String, Object> status() {
-        return Map.of(
-                "nodeId", node.getNodeId(),
-                "role", node.getRole().name(),
-                "term", node.getCurrentTerm(),
-                "peers", node.getPeerList()
-        );
-    }
-
-    @GetMapping("/requestVote")
-    public boolean requestVote(@RequestParam long term, @RequestParam String candidateId) {
-        return node.handleRequestVote(term, candidateId);
-    }
-
     @PostMapping("/appendEntries")
-    public boolean appendEntries(@RequestParam long term, @RequestParam String leaderId, @RequestBody(required = false) List<LogEntry> entries, @RequestParam int leaderCommit) {
-        return node.handleAppendEntries(term, leaderId, entries, leaderCommit);
+    public CompletableFuture<ResponseEntity<AppendEntriesResp>> appendEntries(@RequestBody AppendEntries req) {
+        var future = new CompletableFuture<AppendEntriesResp>();
+        node.submit(() -> node.onAppendEntries(req, future));
+        return future.thenApply(ResponseEntity::ok);
+    }
+
+    @PostMapping("/requestVote")
+    public CompletableFuture<ResponseEntity<RequestVoteResp>> requestVote(@RequestBody RequestVote req) {
+        var future = new CompletableFuture<RequestVoteResp>();
+        node.submit(() -> node.onRequestVote(req, future));
+        return future.thenApply(ResponseEntity::ok);
     }
 }
+

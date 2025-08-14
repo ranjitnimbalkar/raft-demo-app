@@ -1,13 +1,13 @@
-spring:
-  application:
-  name: raft-demo-app
 server:
-  port: ${PORT:8080}
+  port: 8080
 
 raft:
-  nodeId: ${RAFT_NODE_ID:NODE_1}
-  peers: ${RAFT_PEERS:localhost:8081,localhost:8082,localhost:8083,localhost:8084}
-
-logging:
-  level:
-    root: INFO
+  nodeId: NODE_1
+  peers:
+    - http://localhost:8081
+    - http://localhost:8082
+  electionTimeoutMsMin: 150
+  electionTimeoutMsMax: 300
+  heartbeatIntervalMs: 50
+  rpcTimeoutMs: 300
+  maxElectionRetryBackoffMs: 500
